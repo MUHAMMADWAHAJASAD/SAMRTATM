@@ -1,0 +1,33 @@
+databases:
+  - name: smart-atm-db
+    databaseName: smartatm
+    user: atmadmin
+    plan: free
+
+services:
+  - type: web
+    name: smart-atm-backend
+    env: python
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.13
+      - key: DATABASE_URL
+        fromDatabase:
+          name: smart-atm-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+
+  - type: web
+    name: smart-atm-frontend
+    env: static
+    buildCommand: "cd frontend && npm install && npm run build"
+    staticPublishPath: "./frontend/dist"
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: smart-atm-backend
+          envVarKey: RENDER_EXTERNAL_URL
